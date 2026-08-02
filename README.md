@@ -73,7 +73,7 @@ After some experiments, the second line seems:
 
 So, it is certain `mtk-tpd` driver is doing its job handling wheel clicks and rotations. Then we should look at how it does.
 
-### mtk-tpd driver binary (ARM)
+### mtk-tpd kernel driver binary (ARM)
 From `lsmod`, we know the `mtk-tpd` driver was compiled into the kernel binary.
 
 Naturally `/proc/kallsyms` comes in handy. And there is a magic trick I learned: `echo "0" > /proc/sys/kernel/kptr_restrict`.
