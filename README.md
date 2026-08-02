@@ -20,7 +20,7 @@ This section is roughly ordered along the time.
 
 As a disclaimer, I believe what I have is a more common "Type A" Y1.
 
-### Top-level user experience
+### Top-level wheel behavior
 Here are the differences again:
 1. A touch alone won't light up the screen from automatic(idle) screen off. Any one of the buttons should be pressed.
 2. Wheel "rotation" is not sensitive enough (subjective).
@@ -85,7 +85,7 @@ We see standard `tpd_init`, `tpd_probe`, and such. And it seems the wheel contro
 Eventually, voila, `touch_event_handler`! ... Followed by an immediate disappointment. All it does is read 6 bytes the I2C peripheral gives (`tpd_read_byte`), and if-then-else to emit key events. The six number log line from the previous section is all the data to which the driver have access to.
 
 ### tpd firmware update routine
-However, scanning through the kernel functions, we see `tpd_local_init` actually register two I2C drivers: one named `APT32F` and `UPDATE`. In fact `update_probe` calls `spt511x_firmware_update`. In fact SPT5115S IS the controller chip on the wheel ribbon cable!
+However, scanning through the kernel functions, we see `tpd_local_init` actually register two I2C drivers: one named `APT32F` and `UPDATE`. In fact `update_probe` calls `spt511x_firmware_update`. Indeed SPT5115S is the controller chip on the wheel ribbon cable!
 
 Thankfully, `spt511x_firmware_update` is straightforward: through I2C, 1) request firmware version, 2) if different, write flash & eeprom, 3)reboot.
 
@@ -113,9 +113,9 @@ Below are some important functions.
   1. Call `0dcb` to calculate touch position.
   2. Emit a rotation tick if touch position changed. (type=3, key=1/3)
 * `0dcb`
-  1. Looping through 8 touch values, find max value index, and calculate sum(value) and sum(value*index).
+  1. Looping through 8 touch values, subtract baseline value, and find max value index.
   2. Invalidate position to `0xFF` (-1), not touched, if max value is too low (`<5000`).
   3. 
 
-
+TBC
 
