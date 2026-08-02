@@ -48,7 +48,7 @@ Two input devices are relevant:
 In short, the driver module (mtk-tpd) is shy to give out the touch details.
 
 ### mtk-tpd driver logs
-Let's dig further with `cat /proc/kmsg`. Luckily `mtk-tpd` gives just enough data in the logs.
+Let's see if `cat /proc/kmsg` gives anything. Luckily `mtk-tpd` prints just enough data to the logs.
 
 ```
 <4>[  247.754940] (0)[62:mtk-tpd]mtk-tpd: *********** ning  touch panel
@@ -67,7 +67,7 @@ After some experiments, the second line seems:
 
 `key` is valid when the type is 1 or 2. The value is 4/1/8/2 for U/D/L/R. Or, 1/2/4/8 in CCW starting from the bottom button.
 
-`direction` is valid only when the type is 3. But, sorry, I don't remember how they were before I patched it, and I can't give exact values for CW/CCW rotation tick. 
+`direction` is valid only when the type is 3. The value is 3/1 for CW/CCW. 
 
 0x55, 0, and 3 were always same throughout my tinkering.
 
@@ -82,7 +82,7 @@ By unpacking the firmware file, you get linux kernel file, which is in zImage fo
 
 We see standard `tpd_init`, `tpd_probe`, and such. And it seems the wheel controller is communicating via I2C (calling `i2c_register_driver`).
 
-Eventually, voila, `touch_event_handler`! ... Followed by an immediate disappointment. All it does is read 6 bytes the I2C peripheral gives, and if-then-else to emit key events. The six number log line from the previous section is all the data to which the driver have access to.
+Eventually, voila, `touch_event_handler`! ... Followed by an immediate disappointment. All it does is read 6 bytes the I2C peripheral gives (`tpd_read_byte`), and if-then-else to emit key events. The six number log line from the previous section is all the data to which the driver have access to.
 
 ### tpd firmware update routine
 However, scanning through the kernel functions, we see `tpd_local_init` actually register two I2C drivers: one named `APT32F` and `UPDATE`. In fact `update_probe` calls `spt511x_firmware_update`. In fact SPT5115S IS the controller chip on the wheel ribbon cable!
@@ -91,11 +91,31 @@ Thankfully, `spt511x_firmware_update` is straightforward: through I2C, 1) reques
 
 And the firmware to send to and write on the SPT5115S chip, which runs 8051, is stored in plain bytes in kernel binary. 
 
-### tpd controller firmware (8051)
+### SPT5115S tpd controller firmware (8051)
 Now we have 3964 bytes of 8051 bytecode. I have to confess I'm in love with Ghidra by now.
 
-The controller firmware does I2C communication with the main MCU, touchpad DSP control, and button polling. 
+SPT5115S has a separate DSP which probably measure and convert raw capacitance from eight sensor pads to more convenient values. A large part of the 8051 code is for controlling the DSP through `EXTMEM`, but I haven't really looked through the protocol itself, because the sensor values seem reasonable enough.
 
-TBC
+Other parts of the 8051 firmware do detect virtual rotation ticks from the sensor data, and I2C communication with the main MCU. I focused on the detection logic.
+
+Below are some important functions.
+
+* `0759`
+  - Main - initialization and loop
+* `0752`
+  - The function that called in main loop. Calls `0920` then `077b`.
+* `0920`
+  1. Read DSP data including touch pads and buttons.
+  2. Preprocess/extract data into buttons/pad status. 
+  3. Set up flag to process touch if neccessary.
+  4. Emit button events if button status changed. (type=1/2, key=1/2/4/8)
+* `077b` 
+  1. Call `0dcb` to calculate touch position.
+  2. Emit a rotation tick if touch position changed. (type=3, key=1/3)
+* `0dcb`
+  1. Looping through 8 touch values, find max value index, and calculate sum(value) and sum(value*index).
+  2. Invalidate position to `0xFF` (-1), not touched, if max value is too low (`<5000`).
+  3. 
+
 
 
