@@ -1,5 +1,5 @@
-# 8051 controller firmware analysis
-## SPT5115S tpd controller firmware (8051)
+# 8051 controller firmware reverse engineering
+## SPT5115S tpd controller firmware
 Now we have 3964 bytes of 8051 bytecode. I have to confess I'm in love with Ghidra by now.
 
 SPT5115S has a separate DSP which probably measure and convert raw capacitance from eight sensor pads to more convenient values. A large part of the 8051 code is for controlling the DSP through `EXTMEM`, but I haven't really looked through the protocol itself, because the sensor values seem reasonable enough.
