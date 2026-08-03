@@ -1,4 +1,4 @@
-# Linux device driver analysis
+# Kernel wheel driver
 ## mtk-tpd driver binary
 From `lsmod`, we know the `mtk-tpd` driver was compiled into the kernel binary.
 
