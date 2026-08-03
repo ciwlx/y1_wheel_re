@@ -1,4 +1,4 @@
-# OS-level analysis
+# Linux-level input handling
 ## Linux input events
 First thing I did was to enable ADB on Y1. And did `getevent -l`. (Let's skip over the Android key event handling layer.) 
 
