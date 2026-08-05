@@ -17,7 +17,7 @@ Below is the usage of each byte:
 | 7d | 2 | 8051 | 1/2/3 | Type: 1 = button down, 2 = button up, 3 = rotation tick |
 | 7e | 3 | 8051 | 1/2/4/8/0 | Button: 1 = down, 2 = right, 4 = up, 8 = left, 0 = not button event  |
 | 7f | 4 | 8051 | 1/3 | Direction: 1 = CCW, 3 = CW. Strangely button events still sets this byte as 1. |
-| 80 | 5 | MCU | 0/1 | Suspend: 0 = resume, 1 =suspend. Set by `tpd_suspend` and `tpd_resume`. `0920` (below) reads this and do sth. (sry!) |
+| 80 | 5 | MCU | 0/1 | Suspend: 0 = resume, 1 =suspend. Set by `tpd_suspend` and `tpd_resume`. `0920` (below) reads this and do suspend (guess). |
 | 81 | 6 | MCU | 0/0x55 | Set by `touch_event_handler` following battery charger presence? Seems not used by 8051 fw. |
 
 ## Functions
@@ -30,10 +30,10 @@ initialization and loop
 Only function that is called in the main loop. If the controller is setup and running correctly, calls `0920` then `077b`. Else re-initialize something (sorry, out of scope).
 
 ### `0920`: process input from DSP data
-Read/communicate DSP readings via `EXTMEM`, preprocess, and handle button inputs.
+Read/communicate DSP readings via `EXTMEM`, preprocess, and handle button inputs. Also enter suspend by I2C command or no input for timeout.
 
-1. Read DSP data including touch pads and buttons.
-2. Preprocess/extract data into buttons/pad status.
+1. Read DSP data including touch pads and buttons. 
+2. Enter suspend if received I2C command or timeout.
 3. Check if touch data is valid, and set up corresponding flag.
 4. Emit button events if button status changed. (type=1/2, key=1/2/4/8)
 
@@ -66,4 +66,4 @@ I don't really looked into I2C communication control, but this function is calle
 ## Tweaks
 I'm not at all familiar with 8051 and didn't want to setup build toolchain or such for it. So I relied on Ghidra assembler to hand-tweak some parts of the controller firmware.
 
-
+TBC
