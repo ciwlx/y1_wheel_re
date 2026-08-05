@@ -6,6 +6,20 @@ SPT5115S has an 8051 core, and a separate DSP which (probably) measures and conv
 
 Other parts of the 8051 firmware detect virtual rotation ticks from the read data, and communicate with the main MCU via I2C. Here I focus on the detection logic.
 
+## Shared memory interface with main MCU: `INTMEM:7b ~ 7f`
+These 7 bytes of 8051 internal memory are directly accessible from the main MCU with `tpd_read_byte` and `tpd_write_byte` function. Their interface simple, for read, an index. For write, an index and the byte data.
+
+Below is the meaning of each byte:
+| Offset | Index | Set By |Value | Details |
+| ---- | ---- | ---- | ---- | ---- |
+| 7b | 0 | 8051? | ?? | Read once by `tpd_probe`. Seems not accessed by 8051 fw. |
+| 7c | 1 | 8051? | 0x55 | probably Magic |
+| 7d | 2 | 8051 | 1/2/3 | Type: 1 = button down, 2 = button up, 3 = rotation tick |
+| 7e | 3 | 8051 | 1/2/4/8/0 | Button: 1 = down, 2 = right, 4 = up, 8 = left, 0 = not button event  |
+| 7f | 4 | 8051 | 1/3 | Direction: 1 = CCW, 3 = CW. Strangely button events still sets this byte as 1. |
+| 80 | 5 | MCU | 0/1 | Set by `tpd_suspend`.  |
+| 81 | 6 | MCU | 0/0x55 | Set by `touch_event_handler` following battery charger presence? Seems not used by 8051 fw. |
+
 ## Functions
 Below are the offsets of some important functions from 8051 binary.
 
@@ -44,10 +58,7 @@ The capacitance deviation from the base value for each pad is theoretically line
 ### `0a9d` ~ `0b1f`: event functions for each condition
 10(+2) small functions called when a button/tick event is detected. 8 of them are for buttons and are combinations of up/down and 1/2/4/8. 2 of them are for CW and CCW ticks. 
 
-They write event data bytes to a memory buffer then call `0aa7`. This buffer data is where the kernel driver reads from. You can see that only 3 bytes from the 6 bytes logged are actually changing.
-* `INTMEM:7c`: event type - 1 = button down, 2 = button up, 3 = rotation
-* `INTMEM:7d`: button - one of 1/2/4/8. valid if type is 1 or 2
-* `INTMEM:7e`: direction - 1 = CCW, 3 = CW. valid if type is 3.
+They write event data bytes to I2C buffer then call `0aa7`.
 
 ### `0aa7`: notify event data ready to send
 I don't really looked into I2C communication control, but this function is called after buffer writes so I guess this prepares and notifies the I2C controlling parts of the firmware.
@@ -55,27 +66,4 @@ I don't really looked into I2C communication control, but this function is calle
 ## Tweaks
 I'm not at all familiar with 8051 and didn't want to setup build toolchain or such for it. So I relied on Ghidra assembler to hand-tweak some parts of the controller firmware.
 
-### Report absolute position
-The position calculation function `0dcb` already returns absolute position values, including not touching `0xFF` value. To report the values to main MCU, function `0774` should be patched. 
 
-The patched part is below:
-```
- CODE:077b  8f 40           MOV                wheel_pos,R7
- CODE:077d  ef              MOV                A,R7
- CODE:077e  24 29           ADD                A,#0x29              (41)
- CODE:0780  95 42           SUBB               A,wheel_pos_prev
- CODE:0782  ff              MOV                R7,A
- CODE:0783  94 80           SUBB               A,#0x80              (128)
- CODE:0785  50 45           JNC                LAB_CODE_07cc
- CODE:0787  ef              MOV                A,R7
- CODE:0788  75 f0 28        MOV                B,#0x28              (40)
- CODE:078b  84              DIV                AB
- CODE:078c  e5 f0           MOV                A,B
- CODE:078e  94 03           SUBB               A,#0x3
- CODE:0790  50 3a           JNC                LAB_CODE_07cc        (Emit event)
- CODE:0792  22              RET                                     (No event)
-```
-
-`wheel_pos` = `INTMEM:40`, `wheel_pos_prev` = `INTMEM:42`. Code from `07cc` is the wrap-up part of the original `0774` function, which emit the event and update `wheel_pos_prev`. The patched code jumps over about half of the original function, and the patch leaves it as an unreachable section.
-
-In short, emit absoulte value `wheel_pos` if the change is greater or equal to 2, including touch start and end.
