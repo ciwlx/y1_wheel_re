@@ -42,6 +42,6 @@ After some experiments, the second line seems:
 
 `direction` is valid only when the type is 3. The value is 3/1 for CW/CCW. 
 
-0x55, 0, and 3 were always same throughout my tinkering.
-
 So, it is certain `mtk-tpd` driver is doing its job handling wheel clicks and rotations. Then we should look at how it does.
+
++ For the exact meaning of each value is for pt3. 8051 firmware.
