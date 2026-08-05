@@ -32,7 +32,7 @@ Only function that is called in the main loop. If the controller is setup and ru
 ### `0920`: process input from DSP data
 Read/communicate DSP readings via `EXTMEM`, preprocess, and handle button inputs. Also enter suspend by I2C command or no input for timeout.
 
-1. Read DSP data including touch pads and buttons. 
+1. Read DSP status data, including touch status and buttons.
 2. Enter suspend if received I2C command or timeout.
 3. Check if touch data is valid, and set up corresponding flag.
 4. Emit button events if button status changed. (type=1/2, key=1/2/4/8)
@@ -48,7 +48,7 @@ If touch sensor data is valid, track touch position change and emit touch event 
 ### `0dcb`: calculate estimate touch position
 Estimate touch position from 8 sensor values. The return value is one of 40 (0~39) estimate position values, each with approximately 9 degress apart along the circular pad.
 
-1. Looping through 8 touch values, subtract baseline value, and find max value index (let's say `max_i`).
+1. Looping through 8 touch values, read sensor value, subtract baseline value, and find max value index (let's say `max_i`).
 2. Invalidate position to `0xFF (-1)`, not touched, if max value is too low (`<5000`).
 3. Else, from max value and adjacent two values (values at `max_i-1` and `max_i+1`, lets say `ccw_i` and `cw_i`), linearly estimate relative position along the three pads. The formula is roughly `5 * (max_i + 2*cw_i) / (ccw_i + max_i + cw_i)`, which results in [0,10).
 4. Add the absolute offset `5 * (idx-1)` to the relative position value. It's `idx-1` because relative position is [0,10), not [-5,5).
