@@ -17,7 +17,7 @@ Below is the usage of each byte:
 | 7d | 2 | 8051 | 1/2/3 | Type: 1 = button down, 2 = button up, 3 = rotation tick |
 | 7e | 3 | 8051 | 1/2/4/8/0 | Button: 1 = down, 2 = right, 4 = up, 8 = left, 0 = not button event  |
 | 7f | 4 | 8051 | 1/3 | Direction: 1 = CCW, 3 = CW. Strangely button events still sets this byte as 1. |
-| 80 | 5 | MCU | 0/1 | Set by `tpd_suspend`. `0920` (below) reads this and do sth. (sry!) |
+| 80 | 5 | MCU | 0/1 | Suspend: 0 = resume, 1 =suspend. Set by `tpd_suspend` and `tpd_resume`. `0920` (below) reads this and do sth. (sry!) |
 | 81 | 6 | MCU | 0/0x55 | Set by `touch_event_handler` following battery charger presence? Seems not used by 8051 fw. |
 
 ## Functions
