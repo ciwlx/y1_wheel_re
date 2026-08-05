@@ -58,7 +58,7 @@ The capacitance deviation from the base value for each pad is theoretically line
 ### `0a9d` ~ `0b1f`: event functions for each condition
 10(+2) small functions called when a button/tick event is detected. 8 of them are for buttons and are combinations of up/down and 1/2/4/8. 2 of them are for CW and CCW ticks. 
 
-They write event data bytes to I2C buffer then call `0aa7`.
+They write event data bytes at offset 2, 3, 4, then call `0aa7`.
 
 ### `0aa7`: notify event data ready to send
 I don't really looked into I2C communication control, but this function is called after buffer writes so I guess this prepares and notifies the I2C controlling parts of the firmware.
