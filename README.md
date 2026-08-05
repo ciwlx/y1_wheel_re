@@ -18,7 +18,7 @@ My goal, as a hobbyist, was to find where and how exactly 1 and 2 come from, and
 ## Analysis
 This section is roughly ordered along the time.
 
-* [Linux-level input events](01-os-input.md)
-* [Kernel & driver binary reverse engineering](02-arm-driver.md)
+* [Linux-level input events](01-linux-input.md)
+* [Kernel & driver binary reverse engineering](02-kernel-driver.md)
 * [Wheel controller 8051 firmware reverse engineering](03-8051-firmware.md)
 
