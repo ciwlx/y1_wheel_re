@@ -9,7 +9,7 @@ Other parts of the 8051 firmware detect virtual rotation ticks from the read dat
 ## Shared memory interface with main MCU: `INTMEM:7b ~ 7f`
 These 7 bytes of 8051 internal memory are directly accessible from the main MCU with `tpd_read_byte` and `tpd_write_byte` function. Their interface simple, for read, an index. For write, an index and the byte data.
 
-Below is the meaning of each byte:
+Below is the usage of each byte:
 | Offset | Index | Set By |Value | Details |
 | ---- | ---- | ---- | ---- | ---- |
 | 7b | 0 | 8051? | ?? | Read once by `tpd_probe`. Seems not accessed by 8051 fw. |
@@ -17,7 +17,7 @@ Below is the meaning of each byte:
 | 7d | 2 | 8051 | 1/2/3 | Type: 1 = button down, 2 = button up, 3 = rotation tick |
 | 7e | 3 | 8051 | 1/2/4/8/0 | Button: 1 = down, 2 = right, 4 = up, 8 = left, 0 = not button event  |
 | 7f | 4 | 8051 | 1/3 | Direction: 1 = CCW, 3 = CW. Strangely button events still sets this byte as 1. |
-| 80 | 5 | MCU | 0/1 | Set by `tpd_suspend`.  |
+| 80 | 5 | MCU | 0/1 | Set by `tpd_suspend`. `0920` (below) reads this and do sth. (sry!) |
 | 81 | 6 | MCU | 0/0x55 | Set by `touch_event_handler` following battery charger presence? Seems not used by 8051 fw. |
 
 ## Functions
